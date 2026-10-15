@@ -4,6 +4,9 @@ An interactive browser quiz that trains users to recognize phishing emails, SMS 
 
 **Live demo:** https://fevenadane586-design.github.io/phishing-awareness-quiz/
 
+![Screenshot of the Phishing Awareness Quiz](screenshot.png)
+
+
 ## Features
 
 - 8 realistic scenarios: emails, URLs, and an SMS
