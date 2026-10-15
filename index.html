@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phishing Awareness Quiz</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 640px;
+      margin: 40px auto;
+      padding: 0 16px;
+      color: #222;
+    }
+    h1 { margin-bottom: 4px; }
+    .subtitle { color: #555; margin-top: 0; }
+    #progress { font-size: 14px; color: #555; margin: 16px 0 8px; }
+    .card {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 16px;
+      background: #fafafa;
+      white-space: pre-line;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+    .buttons { margin-top: 16px; display: flex; gap: 12px; }
+    button {
+      padding: 10px 18px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      color: white;
+    }
+    #btn-phish { background: #c62828; }
+    #btn-legit { background: #2e7d32; }
+    #btn-next, #btn-restart { background: #1565c0; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    #feedback {
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 6px;
+      display: none;
+      line-height: 1.5;
+    }
+    #feedback.correct { background: #e8f5e9; border: 1px solid #2e7d32; }
+    #feedback.wrong { background: #ffebee; border: 1px solid #c62828; }
+    #btn-next { margin-top: 12px; display: none; }
+    #result { display: none; }
+    .note { font-size: 12px; color: #666; margin-top: 32px; }
+  </style>
+</head>
+<body>
+  <h1>Phishing Awareness Quiz</h1>
+  <p class="subtitle">Can you spot the scam? Decide if each message is phishing or legitimate.</p>
+
+  <div id="quiz">
+    <div id="progress"></div>
+    <div class="card" id="scenario"></div>
+    <div class="buttons">
+      <button id="btn-phish">Phishing</button>
+      <button id="btn-legit">Legitimate</button>
+    </div>
+    <div id="feedback"></div>
+    <button id="btn-next">Next</button>
+  </div>
+
+  <div id="result">
+    <h2>Quiz complete</h2>
+    <p id="score"></p>
+    <p id="advice"></p>
+    <button id="btn-restart">Try again</button>
+  </div>
+
+  <p class="note">
+    All examples are fictional and made for education. Nothing you do here is sent anywhere.
+  </p>
+
+  <script>
+    const questions = [
+      {
+        text: "From: security@paypa1-support.com\nSubject: Your account is limited!\n\nWe noticed unusual activity. Verify your identity within 24 hours or your account will be permanently closed:\nhttp://paypa1-support.com/verify",
+        phishing: true,
+        explanation: "Red flags: the domain uses the number 1 instead of the letter l (paypa1), the message creates urgency with a 24-hour threat, and it asks you to verify through a link in the email."
+      },
+      {
+        text: "From: no-reply@accounts.google.com\nSubject: Security alert\n\nA new sign-in to your account was detected on a Windows device. If this was you, you don't need to do anything. If not, review your activity at myaccount.google.com.",
+        phishing: false,
+        explanation: "This looks legitimate: it comes from the real Google domain, it doesn't demand immediate action, and it points to the official address rather than a strange link. Even so, the safest habit is to go to the site yourself instead of clicking."
+      },
+      {
+        text: "URL: https://secure-login.bankofamerica.com.account-verify.net/signin",
+        phishing: true,
+        explanation: "The real domain is whatever comes right before the first single slash, which here is account-verify.net. The bank's name is only a subdomain placed in front to fool you."
+      },
+      {
+        text: "From: hr@yourcompany-payroll.info\nSubject: Salary update - action required\n\nDear employee,\nYour salary details have changed. Open the attached file and enter your login details to view them.",
+        phishing: true,
+        explanation: "Red flags: an unusual domain that doesn't match the company, a generic greeting, an attachment that asks for your login details, and a subject line designed to make you curious or worried."
+      },
+      {
+        text: "URL: https://www.amazon.com/gp/css/order-history",
+        phishing: false,
+        explanation: "The domain is amazon.com, the connection uses HTTPS, and the path is a normal account page. Nothing in this URL looks suspicious."
+      },
+      {
+        text: "From: ceo@company-mail.co\nSubject: Urgent favor\n\nHi, I'm in a meeting and can't talk. I need you to buy 5 gift cards for a client right now and send me the codes. I'll reimburse you today. Keep this between us.",
+        phishing: true,
+        explanation: "This is a classic CEO fraud scam. Red flags: urgency, secrecy, a request for gift card codes (which are hard to trace), and an email address that only imitates the company domain."
+      },
+      {
+        text: "From: orders@yourbank.com\nSubject: Your monthly statement is ready\n\nYour statement for September is now available. Log in to your online banking app or website as usual to view it.",
+        phishing: false,
+        explanation: "This is probably legitimate: it doesn't include a link or ask for personal information, and it tells you to log in the way you normally do. If you aren't sure, open your banking app directly."
+      },
+      {
+        text: "SMS: Your package could not be delivered. Pay a $1.99 redelivery fee here: http://bit.ly/3xYzPkg",
+        phishing: true,
+        explanation: "Delivery-fee texts are a common scam. Red flags: an unexpected message, a shortened link that hides the real destination, and a small payment request meant to steal your card details."
+      }
+    ];
+
+    const scenarioEl = document.getElementById("scenario");
+    const progressEl = document.getElementById("progress");
+    const feedbackEl = document.getElementById("feedback");
+    const btnPhish = document.getElementById("btn-phish");
+    const btnLegit = document.getElementById("btn-legit");
+    const btnNext = document.getElementById("btn-next");
+    const btnRestart = document.getElementById("btn-restart");
+    const quizEl = document.getElementById("quiz");
+    const resultEl = document.getElementById("result");
+    const scoreEl = document.getElementById("score");
+    const adviceEl = document.getElementById("advice");
+
+    let current = 0;
+    let score = 0;
+
+    function showQuestion() {
+      const q = questions[current];
+      progressEl.textContent = "Question " + (current + 1) + " of " + questions.length;
+      scenarioEl.textContent = q.text;
+      feedbackEl.style.display = "none";
+      btnNext.style.display = "none";
+      btnPhish.disabled = false;
+      btnLegit.disabled = false;
+    }
+
+    function answer(userSaysPhishing) {
+      const q = questions[current];
+      const correct = userSaysPhishing === q.phishing;
+      if (correct) score++;
+
+      feedbackEl.className = correct ? "correct" : "wrong";
+      feedbackEl.textContent = (correct ? "Correct! " : "Not quite. ") +
+        "This message is " + (q.phishing ? "phishing." : "legitimate.") + " " + q.explanation;
+      feedbackEl.style.display = "block";
+
+      btnPhish.disabled = true;
+      btnLegit.disabled = true;
+      btnNext.textContent = current === questions.length - 1 ? "See results" : "Next";
+      btnNext.style.display = "inline-block";
+    }
+
+    function showResult() {
+      quizEl.style.display = "none";
+      resultEl.style.display = "block";
+      scoreEl.textContent = "You scored " + score + " out of " + questions.length + ".";
+
+      if (score === questions.length) {
+        adviceEl.textContent = "Excellent. You spotted every scam. Keep checking domains and avoid clicking links in unexpected messages.";
+      } else if (score >= questions.length * 0.6) {
+        adviceEl.textContent = "Good work. Review the explanations for the ones you missed, and always check the real domain before you click.";
+      } else {
+        adviceEl.textContent = "Phishing is tricky. Try again and focus on the domain name, the sense of urgency, and requests for personal information.";
+      }
+    }
+
+    btnPhish.addEventListener("click", function () { answer(true); });
+    btnLegit.addEventListener("click", function () { answer(false); });
+
+    btnNext.addEventListener("click", function () {
+      current++;
+      if (current < questions.length) {
+        showQuestion();
+      } else {
+        showResult();
+      }
+    });
+
+    btnRestart.addEventListener("click", function () {
+      current = 0;
+      score = 0;
+      resultEl.style.display = "none";
+      quizEl.style.display = "block";
+      showQuestion();
+    });
+
+    showQuestion();
+  </script>
+</body>
+</html>
